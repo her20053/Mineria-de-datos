@@ -1,0 +1,213 @@
+---
+title: "Lab2"
+output:
+  html_document: Lab2
+  pdf_document: Lab2
+date: "2023-02-18"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, echo=FALSE}
+library(cluster) #Para calcular la silueta
+library(e1071)#para cmeans
+library(mclust) #mixtures of gaussians
+library(fpc) #para hacer el plotcluster
+library(NbClust) #Para determinar el número de clusters óptimo
+library(factoextra) #Para hacer gráficos bonitos de clustering
+library(hopkins) #Para revisar si vale la pena hacer agrupamiento
+library(GGally) #Para hacer el conjunto de graficos
+library(FeatureImpCluster) #Para revisar la importancia de las variables en los grupos.
+library(pheatmap) #Para hacer mapa de calor
+library(dplyr)
+library(nortest)
+```
+
+```{r setup, include=TRUE, cache = FALSE}
+datos<-read.csv("movies.csv")
+set.seed(123)
+datos<-datos[complete.cases(datos),]
+summary(datos)
+```
+
+## Analicis para saber si la data esta normalizada
+
+### Popularity
+```{r, echo=FALSE}
+lillie.test(datos$popularity)
+```
+### Budedget
+```{r, echo=FALSE}
+lillie.test(datos$budget)
+```
+### revenue
+```{r, echo=FALSE}
+lillie.test(datos$revenue)
+```
+### runtime
+```{r, echo=FALSE}
+lillie.test(datos$runtime)
+```
+### genresAmount
+```{r, echo=FALSE}
+lillie.test(datos$genresAmount)
+```
+### productionCoAmount
+```{r, echo=FALSE}
+lillie.test(datos$productionCoAmount)
+```
+### productionCountriesAmount
+```{r, echo=FALSE}
+lillie.test(datos$productionCountriesAmount)
+```
+### actorsAmount
+```{r, echo=FALSE}
+lillie.test(datos$actorsAmount)
+```
+### VoteAVG
+```{r, echo=FALSE}
+lillie.test(datos$voteAvg)
+```
+### VoteCount
+```{r, echo=FALSE}
+lillie.test(datos$voteCount)
+```
+
+
+
+
+```{r, echo=FALSE}
+df_clustering <- datos[,c("popularity","budget","revenue","runtime","genresAmount","productionCoAmount","productionCountriesAmount","actorsAmount","voteAvg","voteCount")]
+
+#Escalando los datos
+dfScale <- scale(na.omit(df_clustering))
+
+```
+```{r}
+hopkins(dfScale)
+datos_dist <- dist(dfScale)
+
+fviz_dist(datos_dist, show_labels = F)
+```
+Como se puede visualizar al momento de hacer el hopkings del set de datos el valor resultante fue de 1 por lo que se puede mencionar que este esta alejado del 0.5 por lo que se puede proceder a hacer el metodo de agrupamiento
+```{r}
+wss=0
+for (i in 1:10) 
+  wss[i] <- sum(kmeans(dfScale, centers=i)$withinss)
+plot(1:10, wss, type="b", xlab="Number of Clusters",  ylab="Within groups sum of squares")
+
+```
+```{r}
+fviz_nbclust(dfScale, kmeans, method = "silhouette") +
+labs(subtitle = "Silhouette method")
+
+```
+
+#Cluster de agrupamiento
+```{r}
+km<-kmeans(dfScale,2,iter.max =100)
+datos$grupo<-km$cluster
+km
+
+```
+```{r}
+plotcluster(dfScale,km$cluster)
+```
+
+
+```{r}
+fviz_cluster(km, data = dfScale,geom = "point", ellipse.type = "norm")
+```
+```{r}
+km$size
+```
+```{r}
+km$withinss
+```
+
+```{r}
+silkm <- silhouette(km$cluster,dist(dfScale))
+mean(silkm[,3])
+Kmean <- mean(silkm[,3])
+```
+
+
+
+
+
+#Cluster jerarquico
+```{r}
+matriz_dist <- dist(df_clustering)
+```
+```{r}
+hc <-hclust(datos_dist,method = "ward.D2")
+plot(hc, cex=0.5)
+rect.hclust(hc,k=2)
+```
+```{r}
+fviz_dend(hc, k=2, rect = T, cex = .5)
+```
+
+
+
+
+```{r}
+pop <- as.numeric(dfScale[,"popularity"])
+bud <- as.numeric(dfScale[,"budget"])
+rev <- as.numeric(dfScale[,"revenue"])
+runt <- as.numeric(dfScale[,"runtime"])
+genrsa <- as.numeric(dfScale[,"genresAmount"])
+prodA <- as.numeric(dfScale[,"productionCoAmount"])
+prodCA <- as.numeric(dfScale[,"productionCountriesAmount"])
+actA <- as.numeric(dfScale[,"actorsAmount"])
+voteAvg <- as.numeric(dfScale[,"voteAvg"])
+voteCount <- as.numeric(dfScale[,"voteCount"])
+
+datosframe <- data.frame(pop,bud,rev,runt,genrsa,prodA,prodCA,actA,voteAvg,voteCount)
+
+```
+
+```{r}
+library(GGally)
+ggpairs(datosframe,columns = c(4,5,6,9))
+
+```
+```{r}
+groups<-cutree(hc,k=2)
+datosframe$gruposHc <-groups
+table(datosframe$gruposHc)
+
+```
+```{r}
+silhc<-silhouette(groups,datos_dist)
+mean(silhc[,3])
+Jerar <-mean(silhc[,3])
+
+```
+
+## Problema 5
+
+Grafico k medias
+```{r}
+plot(silkm,cex.names=.4, col=1:3, border=NA)
+
+```
+
+Grafico jerarqueico
+```{r}
+plot(silhc,cex.names=.4, col=1:3, border=NA)
+```
+
+```{r}
+grafica <-data.frame(Algoritmo=c("K-mean", "Jerarquico"), Silueta=c(Kmean,Jerar))
+grafica
+```
+
+
+
+
+
+
+
