@@ -1,0 +1,294 @@
+---
+title: "Lab3"
+author: "Pablo Gonzalez"
+date: "2023-03-02"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r, echo=FALSE}
+library(dplyr)
+library(cluster) #Para calcular la silueta
+library(e1071)#para cmeans
+library(mclust) #mixtures of gaussians
+library(fpc) #para hacer el plotcluster
+library(NbClust) #Para determinar el número de clusters óptimo
+library(factoextra) #Para hacer gráficos bonitos de clustering
+library(hopkins) #Para revisar si vale la pena hacer agrupamiento
+library(GGally) #Para hacer el conjunto de graficos
+library(FeatureImpCluster) #Para revisar la importancia de las variables en los grupos.
+library(pheatmap) #Para hacer mapa de calor
+library(dplyr)
+library(nortest)
+
+```
+
+
+## Laboratorio 3
+
+##Carga de datos
+```{r}
+datos <- read.csv("train.csv")
+
+```
+
+##Variables numericas
+```{r}
+num_vars_numericas <- sapply(datos,is.numeric)
+print(num_vars_numericas)
+
+
+```
+
+
+## Resumen datos para verificar si son numericos
+```{r datos}
+summary(datos)
+```
+Id: Cuantitativa	
+MSSubClass: Cuantitativa	
+MSZoning: Cualitativa	
+LotFrontage: Cuantitativa
+LotArea: Cuantitativa
+Street: Cualitativa	
+Alley: Cualitativa
+LotShape: Cualitativa	
+LandContour: Cualitativa
+Utilities: Cualitativa
+LotConfig	: Cualitativa
+LandSlope: Cualitativa
+Neighborhood: Cualitativa	
+Condition1: Cualitativa	
+Condition2: Cualitativa
+BldgType: Cualitativa	
+HouseStyle: Cualitativa	
+OverallQual: Cuantitativa	
+OverallCond: Cuantitativa	
+YearBuilt: Cuantitativa	
+YearRemodAdd: Cuantitativa	
+RoofStyle: Cualitativa	
+RoofMatl: Cualitativa	
+Exterior1st: Cualitativa
+Exterior2nd: Cualitativa
+MasVnrType: Cualitativa	
+MasVnrArea: Cuantitativa	
+ExterQual: Cualitativa	
+ExterCond: Cualitativa	
+Foundation: Cualitativa	
+BsmtQual: Cualitativa	
+BsmtCond: Cualitativa	
+BsmtExposure: Cualitativa	
+BsmtFinType1: Cualitativa	
+BsmtFinSF1: Cuantitativa	
+BsmtFinType2: Cualitativa	
+BsmtFinSF2: Cuantitativa	
+BsmtUnfSF: Cuantitativa	
+TotalBsmtSF: Cuantitativa	
+Heating: Cualitativa	
+HeatingQC: Cualitativa	
+CentralAir: Cualitativa	
+Electrical: Cualitativa	
+1stFlrSF: Cuantitativa	
+2ndFlrSF: Cuantitativa	
+LowQualFinSF: Cuantitativa	
+GrLivArea: Cuantitativa	
+BsmtFullBath: Cuantitativa	
+BsmtHalfBath: Cuantitativa	
+FullBath: Cuantitativa	
+HalfBath: Cuantitativa	
+BedroomAbvGr: Cuantitativa	
+KitchenAbvGr: Cuantitaiva
+KitchenQual: Cualitativa	
+TotRmsAbvGrd: Cuantitativa
+Functional: Cualitativa	
+Fireplaces: Cuantitativa	
+FireplaceQu: Cualitativa	
+GarageType: Cualitativa	
+GarageYrBlt: Cuantintativa	
+GarageFinish: Cualitativa	
+GarageCars: Cuantitativa	
+GarageArea: Cuantitativa	
+GarageQual: Cualitativa	
+GarageCond: Cualitativa	
+PavedDrive: Cualitativa	
+WoodDeckSF: Cuantitativa	
+OpenPorchSF: Cuantitativa	
+EnclosedPorch: Cuantitativa	
+3SsnPorch: Cuantitativa	
+ScreenPorch: Cuantiativa	
+PoolArea: Cuantitativa	
+PoolQC: Cualitativa	
+Fence: Cualitativa	
+MiscFeature: Cuantitativa	
+MiscVal	MoSold: Cuantitativa	
+YrSold: Cuantitativa	
+SaleType: Cualitativa	
+SaleCondition: Cuantitativa	
+SalePrice: Cuantitativa
+
+
+
+
+
+
+
+##Data frame con los datos numericos
+```{r}
+datos_numericos <-select_if(datos,is.numeric)
+datos_numericos <-datos_numericos[complete.cases(datos_numericos),]
+
+```
+##Data frame normalizado
+```{r}
+datos_numericos <-scale(na.omit(datos_numericos))
+```
+
+
+#Analizar si se puede hacer agrupamiento por medio de hopkings
+```{r}
+set.seed(123)
+hopkins(datos_numericos)
+datos_dist <- dist(datos_numericos)
+
+```
+Como se puede visualizar al momento de hacer el hopkings del set de datos el valor resultante fue de 1 por lo que se puede mencionar que este esta alejado del 0.5 por lo que se puede proceder a hacer el metodo de agrupamiento
+
+```{r}
+wss=0
+for (i in 1:10) 
+  wss[i] <- sum(kmeans(datos_numericos, centers=i)$withinss)
+plot(1:10, wss, type="b", xlab="Number of Clusters",  ylab="Within groups sum of squares")
+```
+
+```{r}
+fviz_nbclust(datos_numericos[,1:4], kmeans, method = "silhouette") +
+labs(subtitle = "Silhouette method")
+
+```
+Se puede visualizar que el numero de Klusters para este set de datos es de 2
+
+
+##Analisis jerarquico
+```{r}
+matriz_dist<- dist(datos_numericos)
+```
+
+
+
+
+```{r}
+hc <-hclust(datos_dist,method = "ward.D2")
+plot(hc, cex=0.5)
+rect.hclust(hc,k=2)
+
+```
+```{r}
+fviz_dend(hc, k=2, rect = T, cex = .5)
+```
+
+
+##Calcular la correlacion de todas las variables con la variable de precio de casas
+```{r}
+
+cor(datos_numericos)
+```
+Como se puede visualizar en la tabla para el dato de Saleprice existen dos columnas con una relacion mayor a 0.7 las cuales son GrLivArea y OverallQual por lo que procedera a crear un data set con estas variables aisladas
+
+##Regresion lineal simple
+
+```{r}
+id <- as.numeric(datos_numericos[,"Id"])
+GrLivArea <- as.numeric(datos_numericos[,"GrLivArea"])
+OverallQual <- as.numeric(datos_numericos[,"OverallQual"])
+SalePrice <- as.numeric(datos_numericos[,"SalePrice"])
+datos_regresion <- data.frame(id,GrLivArea,OverallQual,SalePrice)
+
+  
+porcentaje <-0.7
+corte <-sample(nrow(datos_regresion),nrow(datos_regresion)*porcentaje)
+train <-data.frame(datos_numericos[corte,])
+test <- data.frame(datos_numericos[-corte,])
+
+```
+
+Conjunto de entramiento
+```{r}
+head(train)
+```
+Conjunto de test
+```{r}
+head(test)
+```
+
+```{r}
+fitLPMW <-lm(SalePrice~OverallQual,data = train)
+```
+La ecuacion de la regresion se puede escribir de la siguiente manera
+$SalePrice = `r round(fitLPMW$coefficients[2],2)` OverallQual + `r round(fitLPMW$coefficients[1],2)`$ 
+
+Representacion del modelo
+```{r}
+library(ggplot2)
+ggplot(data = train, mapping = aes(x = OverallQual, y = SalePrice)) +
+geom_point(color = "firebrick", size = 2) +
+geom_smooth(method = "lm", se = TRUE, color = "black") +
+labs(title = "OverallQual ~ SalePrice", x = "Ancho", y = "Longitud") +
+theme_bw() + theme(plot.title = element_text(hjust = 0.5))
+```
+
+### Resumen del modelo
+Analices del resumen del modelo
+```{r}
+summary(fitLPMW)
+```
+
+###Analisis de residuales 
+```{r}
+predL<-predict(fitLPMW, newdata = test)
+```
+
+La prediccion se ve de esta manera
+```{r}
+head(predL)
+```
+
+```{r}
+length(predL)
+```
+
+```{r}
+head(fitLPMW$residuals)
+```
+
+
+
+
+```{r}
+plot(fitLPMW)
+```
+```{r}
+hist(fitLPMW$residuals)
+```
+```{r}
+qqnorm(fitLPMW$residuals)
+qqline(fitLPMW$residuals, col="red")
+```
+```{r}
+library(nortest)
+lillie.test(fitLPMW$residuals)
+```
+###Hallando el SalePrice para un cojunto de prueba
+```{r}
+predLM<-predict(fitLPMW, newdata = test[,c(1,2,4)])
+library(Metrics)
+rmse(predLM,test$SalePrice)
+
+```
+```{r}
+plot(test$SalePrice,col="blue")
+points(predLM, col="red")
+```
+
+
