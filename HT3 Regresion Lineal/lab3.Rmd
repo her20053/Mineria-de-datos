@@ -1,6 +1,6 @@
 ---
 title: "Lab3"
-author: "Pablo Gonzalez"
+author: "Pablo Gonzalez, Jose Hernandez, Javier Mombiela"
 date: "2023-03-02"
 output: html_document
 ---
@@ -26,15 +26,15 @@ library(nortest)
 ```
 
 
-## Laboratorio 3
+# Laboratorio 3
 
-##Carga de datos
+## Carga de datos
 ```{r}
 datos <- read.csv("train.csv")
 
 ```
 
-##Variables numericas
+## Variables numericas
 ```{r}
 num_vars_numericas <- sapply(datos,is.numeric)
 print(num_vars_numericas)
@@ -134,19 +134,19 @@ SalePrice: Cuantitativa
 
 
 
-##Data frame con los datos numericos
+## Data frame con los datos numericos
 ```{r}
 datos_numericos <-select_if(datos,is.numeric)
 datos_numericos <-datos_numericos[complete.cases(datos_numericos),]
 
 ```
-##Data frame normalizado
+## Data frame normalizado
 ```{r}
 datos_numericos <-scale(na.omit(datos_numericos))
 ```
 
 
-#Analizar si se puede hacer agrupamiento por medio de hopkings
+# Analizar si se puede hacer agrupamiento por medio de hopkings
 ```{r}
 set.seed(123)
 hopkins(datos_numericos)
@@ -170,7 +170,7 @@ labs(subtitle = "Silhouette method")
 Se puede visualizar que el numero de Klusters para este set de datos es de 2
 
 
-##Analisis jerarquico
+## Analisis jerarquico
 ```{r}
 matriz_dist<- dist(datos_numericos)
 ```
@@ -189,14 +189,14 @@ fviz_dend(hc, k=2, rect = T, cex = .5)
 ```
 
 
-##Calcular la correlacion de todas las variables con la variable de precio de casas
+## Calcular la correlacion de todas las variables con la variable de precio de casas
 ```{r}
 
 cor(datos_numericos)
 ```
 Como se puede visualizar en la tabla para el dato de Saleprice existen dos columnas con una relacion mayor a 0.7 las cuales son GrLivArea y OverallQual por lo que procedera a crear un data set con estas variables aisladas
 
-##Regresion lineal simple
+## Regresion lineal simple
 
 ```{r}
 id <- as.numeric(datos_numericos[,"Id"])
@@ -246,7 +246,7 @@ Analices del resumen del modelo
 summary(fitLPMW)
 ```
 
-###Analisis de residuales 
+### Analisis de residuales 
 ```{r}
 predL<-predict(fitLPMW, newdata = test)
 ```
@@ -281,7 +281,7 @@ qqline(fitLPMW$residuals, col="red")
 library(nortest)
 lillie.test(fitLPMW$residuals)
 ```
-###Hallando el SalePrice para un cojunto de prueba
+### Hallando el SalePrice para un cojunto de prueba
 ```{r}
 predLM<-predict(fitLPMW, newdata = test[,c(1,2,4)])
 library(Metrics)
@@ -293,7 +293,7 @@ plot(test$SalePrice,col="blue")
 points(predLM, col="red")
 ```
 
-##Segundo modelo
+## Segundo modelo
 ```{r}
 fitLPMW2 <-lm(SalePrice~GrLivArea,data = train)
 ```
@@ -315,7 +315,7 @@ Analices del resumen del modelo
 summary(fitLPMW2)
 ```
 
-###Analisis de residuales 
+## #Analisis de residuales 
 ```{r}
 predL2<-predict(fitLPMW2, newdata = test)
 ```
@@ -350,7 +350,7 @@ qqline(fitLPMW2$residuals, col="red")
 library(nortest)
 lillie.test(fitLPMW2$residuals)
 ```
-###Hallando el SalePrice para un cojunto de prueba
+## #Hallando el SalePrice para un cojunto de prueba
 ```{r}
 predLM2<-predict(fitLPMW2, newdata = test[,c(1,2,4)])
 library(Metrics)
@@ -360,6 +360,22 @@ rmse(predLM2,test$SalePrice)
 ```{r}
 plot(test$SalePrice,col="blue")
 points(predLM2, col="red")
+```
+
+## Regresion lineal multiple
+```{r}
+datos_df <- as.data.frame(datos_numericos)
+multiples <-lm(SalePrice~.,data = datos_df)
+```
+
+### Resumen del modelo
+```{r}
+summary(multiples)
+```
+
+### Analisis de residuales
+```{r}
+plot(multiples)
 ```
 
 
