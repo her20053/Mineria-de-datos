@@ -224,6 +224,8 @@ head(test)
 
 ```{r}
 fitLPMW <-lm(SalePrice~OverallQual,data = train)
+fitLPMW
+
 ```
 La ecuacion de la regresion se puede escribir de la siguiente manera
 $SalePrice = `r round(fitLPMW$coefficients[2],2)` OverallQual + `r round(fitLPMW$coefficients[1],2)`$ 
@@ -234,7 +236,7 @@ library(ggplot2)
 ggplot(data = train, mapping = aes(x = OverallQual, y = SalePrice)) +
 geom_point(color = "firebrick", size = 2) +
 geom_smooth(method = "lm", se = TRUE, color = "black") +
-labs(title = "OverallQual ~ SalePrice", x = "Ancho", y = "Longitud") +
+labs(title = "OverallQual ~ SalePrice", x = "Overallqual", y = "SalesPrice") +
 theme_bw() + theme(plot.title = element_text(hjust = 0.5))
 ```
 
@@ -284,11 +286,81 @@ lillie.test(fitLPMW$residuals)
 predLM<-predict(fitLPMW, newdata = test[,c(1,2,4)])
 library(Metrics)
 rmse(predLM,test$SalePrice)
-
 ```
+
 ```{r}
 plot(test$SalePrice,col="blue")
 points(predLM, col="red")
 ```
+
+##Segundo modelo
+```{r}
+fitLPMW2 <-lm(SalePrice~GrLivArea,data = train)
+```
+La ecuacion de la regresion se puede escribir de la siguiente manera
+$SalePrice = `r round(fitLPMW2$coefficients[2],2)` GrLivArea + `r round(fitLPMW2$coefficients[1],2)`$ 
+
+
+```{r}
+library(ggplot2)
+ggplot(data = train, mapping = aes(x = GrLivArea , y = SalePrice)) +
+geom_point(color = "firebrick", size = 2) +
+geom_smooth(method = "lm", se = TRUE, color = "black") +
+labs(title = "GrLivArea ~ SalePrice", x = "GrLivearea", y = "SalesPrice") +
+theme_bw() + theme(plot.title = element_text(hjust = 0.5))
+```
+### Resumen del modelo
+Analices del resumen del modelo
+```{r}
+summary(fitLPMW2)
+```
+
+###Analisis de residuales 
+```{r}
+predL2<-predict(fitLPMW2, newdata = test)
+```
+
+La prediccion se ve de esta manera
+```{r}
+head(predL2)
+```
+
+```{r}
+length(predL2)
+```
+
+```{r}
+head(fitLPMW2$residuals)
+```
+
+```{r}
+plot(fitLPMW2)
+```
+
+```{r}
+hist(fitLPMW2$residuals)
+```
+
+```{r}
+qqnorm(fitLPMW2$residuals)
+qqline(fitLPMW2$residuals, col="red")
+```
+
+```{r}
+library(nortest)
+lillie.test(fitLPMW2$residuals)
+```
+###Hallando el SalePrice para un cojunto de prueba
+```{r}
+predLM2<-predict(fitLPMW2, newdata = test[,c(1,2,4)])
+library(Metrics)
+rmse(predLM2,test$SalePrice)
+```
+
+```{r}
+plot(test$SalePrice,col="blue")
+points(predLM2, col="red")
+```
+
 
 
