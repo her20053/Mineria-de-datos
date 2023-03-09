@@ -241,10 +241,27 @@ theme_bw() + theme(plot.title = element_text(hjust = 0.5))
 ```
 
 ### Resumen del modelo
-Analices del resumen del modelo
+Analicis del resumen del modelo
 ```{r}
 summary(fitLPMW)
 ```
+Se puede mencionar que el primer modelo tien un r^2 de 0.63
+
+#Eror cuadratico medio para el primer modelo
+```{r}
+mse <-mean(resid(fitLPMW)^2)
+mse
+```
+Se puede mencionar que el error cuadratico medio para el primero modelo es de 
+0.3122
+#Error absoluto medio
+```{r}
+mae <-mean(abs(resid(fitLPMW)))
+mae
+```
+Se puede menncionar que el eror absoluto medio de para el primer modelo es de 
+0.39
+
 
 ### Analisis de residuales 
 ```{r}
@@ -270,22 +287,27 @@ head(fitLPMW$residuals)
 ```{r}
 plot(fitLPMW)
 ```
+
 ```{r}
 hist(fitLPMW$residuals)
 ```
+
 ```{r}
 qqnorm(fitLPMW$residuals)
 qqline(fitLPMW$residuals, col="red")
 ```
+
 ```{r}
 library(nortest)
 lillie.test(fitLPMW$residuals)
 ```
+
+
+
+
 ### Hallando el SalePrice para un cojunto de prueba
 ```{r}
 predLM<-predict(fitLPMW, newdata = test[,c(1,2,4)])
-library(Metrics)
-rmse(predLM,test$SalePrice)
 ```
 
 ```{r}
@@ -293,74 +315,11 @@ plot(test$SalePrice,col="blue")
 points(predLM, col="red")
 ```
 
+
+
+
+
 ## Segundo modelo
-```{r}
-fitLPMW2 <-lm(SalePrice~GrLivArea,data = train)
-```
-La ecuacion de la regresion se puede escribir de la siguiente manera
-$SalePrice = `r round(fitLPMW2$coefficients[2],2)` GrLivArea + `r round(fitLPMW2$coefficients[1],2)`$ 
-
-
-```{r}
-library(ggplot2)
-ggplot(data = train, mapping = aes(x = GrLivArea , y = SalePrice)) +
-geom_point(color = "firebrick", size = 2) +
-geom_smooth(method = "lm", se = TRUE, color = "black") +
-labs(title = "GrLivArea ~ SalePrice", x = "GrLivearea", y = "SalesPrice") +
-theme_bw() + theme(plot.title = element_text(hjust = 0.5))
-```
-### Resumen del modelo
-Analices del resumen del modelo
-```{r}
-summary(fitLPMW2)
-```
-
-## #Analisis de residuales 
-```{r}
-predL2<-predict(fitLPMW2, newdata = test)
-```
-
-La prediccion se ve de esta manera
-```{r}
-head(predL2)
-```
-
-```{r}
-length(predL2)
-```
-
-```{r}
-head(fitLPMW2$residuals)
-```
-
-```{r}
-plot(fitLPMW2)
-```
-
-```{r}
-hist(fitLPMW2$residuals)
-```
-
-```{r}
-qqnorm(fitLPMW2$residuals)
-qqline(fitLPMW2$residuals, col="red")
-```
-
-```{r}
-library(nortest)
-lillie.test(fitLPMW2$residuals)
-```
-## #Hallando el SalePrice para un cojunto de prueba
-```{r}
-predLM2<-predict(fitLPMW2, newdata = test[,c(1,2,4)])
-library(Metrics)
-rmse(predLM2,test$SalePrice)
-```
-
-```{r}
-plot(test$SalePrice,col="blue")
-points(predLM2, col="red")
-```
 
 ## Regresion lineal multiple
 ```{r}
@@ -372,11 +331,79 @@ multiples <-lm(SalePrice~.,data = datos_df)
 ```{r}
 summary(multiples)
 ```
+Se puede mencionar que el r^2 para el segudo modelo es de 0.81
 
-### Analisis de residuales
+#Error medio cuadrtico del modelo mutiples
+```{r}
+mse2 <-mean(resid(multiples)^2)
+mse2
+
+```
+Se puede mencionar que el error medio cuadratico del modelo de multiples es de 0.19
+#Error absoluto medio del modelo de multiples
+```{r}
+mae2 <-mean(abs(resid(multiples)))
+mae2
+```
+Se puede mencionar que el error absoluto medio del modelo de multiples es de
+0.27
+
+### Analisis de residuales segundo modelo
+```{r}
+predL2<-predict(multiples, newdata = test)
+```
+La prediccion se ve de esta manera
+```{r}
+head(predL2)
+```
+
+```{r}
+length(predL2)
+```
+
+```{r}
+head(multiples$residuals)
+```
+
+
 ```{r}
 plot(multiples)
 ```
+
+```{r}
+hist(multiples$residuals)
+```
+
+```{r}
+qqnorm(multiples$residuals)
+qqline(multiples$residuals, col="red")
+```
+
+```{r}
+library(nortest)
+lillie.test(multiples$residuals)
+```
+
+
+
+
+### Hallando el SalePrice para un cojunto de prueba
+
+
+```{r}
+predMlm2 <-predict(multiples,newdata = test[])
+```
+```{r}
+plot(test$SalePrice,col="blue")
+points(predMlm2, col="red")
+```
+
+###Seleccion de modelo
+En general, se puede mencionar que un r^2 mas alto indica que el modelo tiene un mejor ajuste a los daros, como sepuede visualizar el primer modelo tiene un r^2 de 0.63, lo que sigfica que el 63% de la variabilidad en los datos se explica por el modelo, mientras que el segundo modelo el cual toma en cuenta mas variables tiene un r^2 de 0.81%, lo que significa de la variabilidad en los datos se explica por el modelo, por lo tanto el segundo modelo tiene un mejor r^2. Ademas se peude mencionar que el error medio cuadrado rmse es otra medida de precision del modelo por lo que el rmse mas bajo indica una mejor precision en el modelo por lo que el segundo modelo vuelvo a tener una medida mas baja la cual es de 0.19 en comparacion con el primero de 0.31, Por lo que se puede concluir que el segundo modelo de multicoleanidad tambien se puede visualizar en la grafica del modelo que este tiene un mejor desempeño con la prueba de datos por lo que se seleccionaia este modelo como el mejor modelo para los datos descritos.
+
+
+
+
 
 
 
