@@ -4,27 +4,80 @@ author: "Javier Mombiela, Jose Hernandez, Pablo Gonzalez"
 date: "2023-03-10"
 output: html_document
 ---
+```{r}
+install.packages("rpart.plot")
+install.packages("randomForest")
+```
+
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(cluster) #Para calcular la silueta
+library(e1071)#para cmeans
+library(mclust) #mixtures of gaussians
+library(fpc) #para hacer el plotcluster
+library(NbClust) #Para determinar el número de clusters óptimo
+library(factoextra) #Para hacer gráficos bonitos de clustering
+library(hopkins) #Para revisar si vale la pena hacer agrupamiento
+library(GGally) #Para hacer el conjunto de graficos
+library(FeatureImpCluster) #Para revisar la importancia de las variables en los grupos.
+library(pheatmap) #Para hacer mapa de calor
+library(dplyr)
+library(nortest)
+library(rpart)
+library(caret)
+library(tree)
+library(rpart.plot)
+library(randomForest)
+
 ```
 
-## R Markdown
+## Lab 4 Arboles de decision 
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+```{r}
+datos <-read.csv("train.csv")
+datos_numericos <-select_if(datos,is.numeric)
+datos_numericos <-datos_numericos[complete.cases(datos_numericos),]
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
 ```
 
-## Including Plots
-
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
+## Data frame normalizado
+```{r}
+datos_numericos <-scale(na.omit(datos_numericos))
+```
+#Datos de entrenamiento y datos de test
+```{r}
+id <- as.numeric(datos_numericos[,"Id"])
+GrLivArea <- as.numeric(datos_numericos[,"GrLivArea"])
+OverallQual <- as.numeric(datos_numericos[,"OverallQual"])
+SalePrice <- as.numeric(datos_numericos[,"SalePrice"])
+datos_regresion <- data.frame(id,GrLivArea,OverallQual,SalePrice)
+  
+porcentaje <-0.7
+corte <-sample(nrow(datos_regresion),nrow(datos_regresion)*porcentaje)
+train <-data.frame(datos_numericos[corte,])
+test <- data.frame(datos_numericos[-corte,])
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+#Crear el modelo con Forest de prueba
+```{r}
+datos_numericos <-data.frame(datos_numericos)
+regression_tree <-rpart(formula = SalePrice ~.,data = train)
+rpart.plot(regression_tree,box.palette = "green")
+```
+#Resumen del modelo
+```{r}
+summary(regression_tree)
+```
+
+#Predicciones 
+```{r}
+predicciones <- predict(regression_tree,newdata = test)
+
+```
+
+
+
+
+
