@@ -74,8 +74,13 @@ summary(regression_tree)
 #Predicciones 
 ```{r}
 predicciones <- predict(regression_tree,newdata = test)
-
 ```
+
+#Metricas de evaluacion
+```{r}
+confusionMatrix(predicciones,dato)
+```
+
 
 
 
