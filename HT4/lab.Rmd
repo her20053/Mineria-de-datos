@@ -175,21 +175,13 @@ rpart.plot(modelo4)
 
 # 1.8 Eficiencia del modelo
 ```{r}
-ypred <- predict(modelo4, newdata = test2)
-ypred<-apply(ypred, 1, function(x) colnames(ypred)[which.max(x)])
-ypred <- factor(ypred)
-my_recall_function <- function(ytrue, ypred, positive) {
-  recall_score <- Recall(ytrue, ypred, positive = positive)
-  return(recall_score)
-}
+prediccion4 <- predict(modelo4, newdata = test2)
+ColunmasAlta<-apply(prediccion4, 1, function(x) colnames(prediccion4)[which.max(x)])
+test2$prediccion4 <-ColunmasAlta
 
-# Llamar a la función my_recall_function()
-recall_score <- my_recall_function(test2$Classification, ypred, positive = c("Caras", "Intermedias", "Economicas"))
-recall_score
-
-
-
-# <!-- ``` -->
+cfm<-confusionMatrix(as.factor(test2$prediccion4),test2$Classification)
+cfm
+```
 
 
 
