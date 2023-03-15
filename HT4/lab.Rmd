@@ -46,7 +46,8 @@ datos_numericos <-datos_numericos[complete.cases(datos_numericos),]
 ```{r}
 datos_numericos <-scale(na.omit(datos_numericos))
 ```
-#Datos de entrenamiento y datos de test
+# 1.1 Datos de train y datos de test
+## Datos de entrenamiento y datos de test
 ```{r}
 id <- as.numeric(datos_numericos[,"Id"])
 GrLivArea <- as.numeric(datos_numericos[,"GrLivArea"])
@@ -59,29 +60,136 @@ corte <-sample(nrow(datos_regresion),nrow(datos_regresion)*porcentaje)
 train <-data.frame(datos_numericos[corte,])
 test <- data.frame(datos_numericos[-corte,])
 ```
-
-#Crear el modelo con Forest de prueba
+# 1.2 Modelo de regresion arbol
+## Crear el modelo con Forest de prueba
 ```{r}
 datos_numericos <-data.frame(datos_numericos)
 regression_tree <-rpart(formula = SalePrice ~.,data = train)
 rpart.plot(regression_tree,box.palette = "green")
 ```
-#Resumen del modelo
+## Resumen del modelo
 ```{r}
 summary(regression_tree)
 ```
 
-#Predicciones 
+# 1.3 Predicciones
+## Predicciones 
 ```{r}
-predicciones <- predict(regression_tree,newdata = test)
+prediccion <- predict(regression_tree,newdata = test)
+
+```
+## Metricas de evaluacion
+```{r}
+R2 <- 1 - (sum((prediccion - test$SalePrice) ^2)) / sum((test$SalePrice - mean(test$SalePrice))^2)
+R2
+```
+El R^2 de la prediccion de nuestro modelo es de 0.7531 por lo cual se puede decir que es un modelo aceptable ya que tiene un r^2 mayor a 0.75
+
+# 1.4 Realizar3 modelos mas con profundidades diferentes
+
+## Primer modelo
+```{r}
+modelo1 <-rpart(formula = SalePrice ~.,data = train, maxdepth = 2 )
+rpart.plot(modelo1,box.palette = "green")
+```
+## Prediccion y metricas
+```{r}
+prediccion1 <- predict(modelo1,newdata = test)
+R2m1 <- 1 - (sum((prediccion1 - test$SalePrice) ^2)) / sum((test$SalePrice - mean(test$SalePrice))^2)
+R2m1
+```
+## Segundo modelo
+```{r}
+modelo2 <-rpart(formula = SalePrice ~.,data = train, maxdepth = 4 )
+rpart.plot(modelo2,box.palette = "green")
+```
+## Prediccion y metricas
+```{r}
+prediccion2 <- predict(modelo2,newdata = test)
+R2m2 <- 1 - (sum((prediccion2 - test$SalePrice) ^2)) / sum((test$SalePrice - mean(test$SalePrice))^2)
+R2m2
+```
+## Tercer modelo
+```{r}
+modelo3 <-rpart(formula = SalePrice ~.,data = train, maxdepth = 10 )
+rpart.plot(modelo3,box.palette = "green")
+```
+## Prediccion y metricas
+```{r}
+prediccion3 <- predict(modelo3,newdata = test)
+R2m3<- 1 - (sum((prediccion3 - test$SalePrice) ^2)) / sum((test$SalePrice - mean(test$SalePrice))^2)
+R2m3
+```
+Vemos que en los 3 modelos creados con las diferentes profundidades se peude visualizar que el mejor modelo fue el modelo que un depth de 10 el cual se obtuvo un r^2 de 0.75 pero se puede mencionar que este no fue mejor que el modelo multivariable de la hoja anterior el cual obtuvo un r^2 de 0.8 por lo que se puede concluir que este modelo de arboles no lo hizo mejor que el modelo de regresion multivariable, con respecto a la seleccion del modelo podemos concluir que cualquier modelo entre el modelo inciial que tiene un depth de 5 por default o el modelo con depth 10 es aceptable ya que los dos presentaron el mismo resultado.
+
+# 1.6
+
+
+
+```{r}
+SalePrices <- datos_numericos$SalePrice
+q1 <- quantile(datos_numericos$SalePrice,0.33)
+q2 <- quantile(datos_numericos$SalePrice,0.5)
+q3 <-quantile(datos_numericos$SalePrice,0.7)
+datos_numericos$Classification <- sapply(datos_numericos$SalePrice, function(x) ifelse(x <= q1, "Economicas", ifelse(x >= q2 && x <= q3, "Intermedias", "Caras")))
+datos_numericos$Classification <-factor(datos_numericos$Classification)
 ```
 
-#Metricas de evaluacion
+## Hacer el data set con las nuevas variables
+
 ```{r}
-confusionMatrix(predicciones,dato)
+table(datos_numericos$Classification)
+table(datos_numericos$Classification)
+
+dfEcon <- subset(datos_numericos,Classification == "Economicas")
+dfMed <- subset(datos_numericos, Classification == "Intermedias")
+dfCaras <-subset(datos_numericos,Classification == "Caras")
+
+
+
+datosf <- rbind(dfEcon,dfMed,dfCaras)
+
+id <- as.numeric(datosf[,"Id"])
+GrLivArea <- as.numeric(datosf[,"GrLivArea"])
+OverallQual <- as.numeric(datosf[,"OverallQual"])
+SalePrice <- as.numeric(datosf[,"SalePrice"])
+Clas <- datosf[,"Classification"]
+datos_regresion2 <- data.frame(id,GrLivArea,OverallQual,SalePrice,Clas)
+
+random_row_order <- sample(rownames(datos_regresion2))
+
+datos_regresion2 <-datos_regresion2[random_row_order,]
+
+porcentaje <-0.7
+corte <-sample(nrow(datos_regresion2),nrow(datos_regresion2)*porcentaje)
+
+train2 <-data.frame(datosf[corte,])
+test2 <- data.frame(datosf[-corte,])
 ```
 
+## Realizamos el modelo
+```{r}
+modelo4 <- rpart(Classification~.,train2,method = "class",maxdepth=10)
+rpart.plot(modelo4)
+```
 
+# 1.8 Eficiencia del modelo
+```{r}
+ypred <- predict(modelo4, newdata = test2)
+ypred<-apply(ypred, 1, function(x) colnames(ypred)[which.max(x)])
+ypred <- factor(ypred)
+my_recall_function <- function(ytrue, ypred, positive) {
+  recall_score <- Recall(ytrue, ypred, positive = positive)
+  return(recall_score)
+}
+
+# Llamar a la función my_recall_function()
+recall_score <- my_recall_function(test2$Classification, ypred, positive = c("Caras", "Intermedias", "Economicas"))
+recall_score
+
+
+
+```
 
 
 
